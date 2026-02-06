@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🍀 会話パートナー</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #FBF8F3; --white: #FFFFFF; --peach: #FFF5EE;
+  --mint: #F0F7F4; --mint-dark: #5BA88C; --mint-med: #E0F0E8;
+  --coral: #E8927C; --coral-light: #FFF0EB;
+  --brown: #5C4A3A; --brown-light: #8B7B6B; --brown-pale: #E8E0D6;
+  --bubble-a: #DCF0E5; --bubble-b: #FDE8DC;
+  --tag-a: #5BA88C; --tag-b: #E8927C;
+  --danger: #D4736C; --danger-bg: #FFF0EE;
+  --shadow: 0 2px 12px rgba(92,74,58,0.06);
+  --font-size: 18px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', 'Hiragino Maru Gothic Pro', sans-serif;
+  background: var(--cream); color: var(--brown);
+  max-width: 540px; margin: 0 auto; min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+input, textarea { font-family: inherit; }
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,115,108,0.4); }
+  50% { box-shadow: 0 0 0 14px rgba(212,115,108,0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #5BA88C 0%, #6DB89C 100%);
+  color: #fff; position: sticky; top: 0; z-index: 10;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 20px rgba(91,168,140,0.2);
+}
+.header-title { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
+.hdr-btn {
+  background: rgba(255,255,255,0.2); border: none; color: #fff;
+  font-size: 15px; padding: 6px 14px; border-radius: 20px; font-weight: 600;
+}
+
+/* Cards */
+.card {
+  background: var(--white); border-radius: 20px; padding: 18px;
+  margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--brown-pale);
+}
+.card-title { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+.card-meta { font-size: 13px; color: var(--brown-light); }
+.card-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+/* Buttons */
+.btn-primary {
+  width: 100%; padding: 18px; font-size: 17px; font-weight: 700;
+  background: linear-gradient(135deg, #5BA88C, #6DB89C); color: #fff;
+  border: none; border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(91,168,140,0.25); margin-bottom: 24px;
+}
+.btn-small {
+  padding: 9px 14px; font-size: 13px; font-weight: 600;
+  border: none; border-radius: 14px;
+}
+.btn-pill {
+  flex: 1; padding: 14px; font-size: 16px; font-weight: 700;
+  border: none; border-radius: 14px;
+}
+.btn-circle {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; flex-shrink: 0; border: none;
+  transition: background 0.25s;
+}
+
+/* Speaker toggle */
+.speaker-bar { display: flex; padding: 10px 12px 6px; gap: 10px; background: var(--cream); }
+.speaker-btn {
+  flex: 1; padding: 14px 0; font-size: 16px; font-weight: 700;
+  border-radius: 16px; border: 2px solid var(--brown-pale);
+  background: transparent; color: var(--brown-light);
+  transition: all 0.25s ease;
+}
+.speaker-btn.active-a {
+  border: 3px solid var(--tag-a); background: var(--mint-med);
+  color: var(--tag-a); box-shadow: 0 2px 12px rgba(91,168,140,0.13);
+}
+.speaker-btn.active-b {
+  border: 3px solid var(--tag-b); background: var(--coral-light);
+  color: var(--tag-b); box-shadow: 0 2px 12px rgba(232,146,124,0.13);
+}
+
+/* Messages */
+.messages { flex: 1; overflow-y: auto; padding: 12px 14px 8px; background: var(--cream); }
+.msg { display: flex; flex-direction: column; margin-bottom: 14px; }
+.msg.left { align-items: flex-start; }
+.msg.right { align-items: flex-end; }
+.msg-meta { font-size: 11px; color: var(--brown-light); margin-bottom: 3px; }
+.msg.left .msg-meta { padding-left: 6px; }
+.msg.right .msg-meta { padding-right: 6px; }
+.msg-bubble {
+  padding: 12px 16px; max-width: 82%; line-height: 1.7;
+  word-break: break-word; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.msg.left .msg-bubble { background: var(--bubble-a); border-radius: 6px 20px 20px 20px; }
+.msg.right .msg-bubble { background: var(--bubble-b); border-radius: 20px 6px 20px 20px; }
+
+/* Input area */
+.input-area {
+  padding: 10px 14px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: var(--white); border-top: 1px solid var(--brown-pale);
+}
+.input-label { font-size: 12px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+.input-text {
+  flex: 1; padding: 10px 14px; font-size: 16px; border-radius: 18px;
+  border: 2px solid var(--brown-pale); outline: none; resize: none;
+  line-height: 1.5; transition: all 0.25s;
+}
+.input-text.listening-a { border-color: var(--tag-a); background: var(--mint-med); }
+.input-text.listening-b { border-color: var(--tag-b); background: var(--coral-light); }
+
+/* Quick replies */
+.quick-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px;
+  background: var(--white); border-top: 1px solid var(--brown-pale);
+}
+.quick-btn {
+  padding: 9px 16px; font-size: 14px; border-radius: 20px;
+  background: transparent; font-weight: 600;
+}
+
+/* Empty state */
+.empty { text-align: center; padding: 48px 20px; color: var(--brown-light); }
+.empty-icon { font-size: 48px; margin-bottom: 8px; }
+.empty-title { font-weight: 600; font-size: 15px; }
+.empty-sub { font-size: 13px; }
+
+/* Settings */
+.setting-group { margin-bottom: 16px; }
+.setting-label { font-size: 13px; color: var(--brown-light); margin-bottom: 6px; font-weight: 600; }
+.setting-input {
+  width: 100%; padding: 13px; font-size: 16px; border-radius: 14px;
+  border: 2px solid var(--brown-pale); outline: none;
+}
+.size-bar { display: flex; gap: 10px; }
+.size-btn {
+  flex: 1; padding: 14px; font-size: 16px; font-weight: 700;
+  border-radius: 14px; transition: all 0.2s;
+}
+.size-btn.active { border: 3px solid var(--mint-dark); background: var(--mint-med); color: var(--mint-dark); }
+.size-btn:not(.active) { border: 2px solid var(--brown-pale); background: transparent; color: var(--brown); }
+.preview {
+  margin-top: 14px; padding: 14px; background: var(--cream);
+  border-radius: 14px; line-height: 1.6;
+}
+.info-note {
+  font-size: 13px; color: var(--brown-light); margin-top: 14px;
+  padding: 10px 14px; background: var(--peach); border-radius: 12px;
+}
+
+/* Screens */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; }
+.screen-home.active { display: block; }
+.screen-settings.active { display: block; }
+.screen-chat.active { display: flex; height: 100vh; }
+
+/* New session form */
+.new-form {
+  background: var(--white); border-radius: 20px; padding: 20px;
+  margin-bottom: 24px; border: 2px solid var(--mint-dark); box-shadow: var(--shadow);
+}
+.new-form-title { font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+.new-form-input {
+  width: 100%; padding: 14px; font-size: 16px;
+  border: 2px solid var(--brown-pale); border-radius: 14px; outline: none;
+}
+.new-form-actions { display: flex; gap: 10px; margin-top: 14px; }
+
+/* Export modal */
+.export-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4); z-index: 100;
+  justify-content: center; align-items: center;
+}
+.export-modal-overlay.active { display: flex; }
+.export-modal {
+  background: var(--white); border-radius: 24px; padding: 24px;
+  margin: 20px; max-width: 400px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.export-modal h3 { margin-bottom: 16px; font-size: 18px; }
+.export-btn {
+  width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+  border: none; border-radius: 14px; margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HOME SCREEN ===== -->
+<div id="screen-home" class="screen screen-home active">
+  <div class="header">
+    <div style="width:64px"></div>
+    <span class="header-title">🍀 会話パートナー</span>
+    <button class="hdr-btn" onclick="showScreen('settings')">⚙ 設定</button>
+  </div>
+  <div style="padding:20px 16px">
+    <button id="btn-new-session" class="btn-primary" onclick="showNewForm()">＋ 新しい会話を始める</button>
+    <div id="new-form" class="new-form fade-in" style="display:none">
+      <p class="new-form-title">セッション名</p>
+      <input id="new-label" class="new-form-input" placeholder="例：田中さん 2/6" onkeydown="if(event.key==='Enter')createSession()">
+      <div class="new-form-actions">
+        <button class="btn-pill" style="background:var(--mint-dark);color:#fff" onclick="createSession()">作成</button>
+        <button class="btn-pill" style="background:var(--brown-pale);color:var(--brown)" onclick="hideNewForm()">キャンセル</button>
+      </div>
+    </div>
+    <div id="session-list"></div>
+  </div>
+</div>
+
+<!-- ===== CHAT SCREEN ===== -->
+<div id="screen-chat" class="screen screen-chat">
+  <div class="header">
+    <button class="hdr-btn" onclick="backToHome()">← 戻る</button>
+    <span class="header-title" id="chat-title"></span>
+    <div style="display:flex;gap:6px">
+      <button class="hdr-btn" style="font-size:13px" onclick="copyExport()" id="btn-copy-header">📋</button>
+      <button class="hdr-btn" style="font-size:13px" onclick="downloadExport()">📥</button>
+    </div>
+  </div>
+
+  <div class="speaker-bar">
+    <button id="sp-btn-a" class="speaker-btn active-a" onclick="setSpeaker('A')">🅰 <span id="sp-label-a">スタッフ</span></button>
+    <button id="sp-btn-b" class="speaker-btn" onclick="setSpeaker('B')">🅱 <span id="sp-label-b">相手</span></button>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="empty" id="msg-empty">
+      <p style="font-size:36px;margin-bottom:8px">🌿</p>
+      <p class="empty-title">会話を始めましょう</p>
+      <p class="empty-sub">話者を選んで、音声 🎤 またはテキストで入力</p>
+    </div>
+  </div>
+
+  <div id="quick-bar" class="quick-bar" style="display:none"></div>
+
+  <div class="input-area">
+    <div class="input-label" id="input-label" style="color:var(--tag-a)">● スタッフ が入力中</div>
+    <div class="input-row">
+      <button class="btn-circle" id="btn-quick" onclick="toggleQuick()"
+        style="width:42px;height:42px;border:2px solid var(--brown-pale);background:transparent;font-size:16px">💬</button>
+      <textarea id="input-text" class="input-text" placeholder="テキストを入力..." rows="2"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+      <button class="btn-circle" id="btn-mic" onclick="toggleMic()"
+        style="width:50px;height:50px;background:var(--tag-a);color:#fff;font-size:22px">🎤</button>
+      <button class="btn-circle" id="btn-send" onclick="sendMessage()"
+        style="width:50px;height:50px;background:var(--brown-pale);color:#fff;font-size:20px">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS SCREEN ===== -->
+<div id="screen-settings" class="screen screen-settings">
+  <div class="header">
+    <button class="hdr-btn" onclick="showScreen('home')">← 戻る</button>
+    <span class="header-title">⚙ 設定</span>
+    <div style="width:64px"></div>
+  </div>
+  <div style="padding:20px 16px">
+    <div class="card" style="padding:20px">
+      <h3 style="margin-bottom:16px;font-size:16px;font-weight:700">話者の名前</h3>
+      <div class="setting-group">
+        <div class="setting-label">🅰 話者A</div>
+        <input id="set-speaker-a" class="setting-input" oninput="updateSpeakerNames()">
+      </div>
+      <div class="setting-group" style="margin-bottom:0">
+        <div class="setting-label">🅱 話者B</div>
+        <input id="set-speaker-b" class="setting-input" oninput="updateSpeakerNames()">
+      </div>
+    </div>
+
+    <div class="card" style="padding:20px">
+      <h3 style="margin-bottom:16px;font-size:16px;font-weight:700">文字サイズ</h3>
+      <div class="size-bar" id="size-bar"></div>
+      <p class="preview" id="size-preview">プレビュー：この大きさで表示されます</p>
+    </div>
+
+    <div class="card" style="padding:20px">
+      <h3 style="margin-bottom:12px;font-size:16px;font-weight:700">このアプリについて</h3>
+      <p style="font-size:14px;color:var(--brown-light);line-height:1.9">
+        聴覚障害者と健常者の対面コミュニケーションを支援するチャットアプリです。音声入力とテキスト入力を切り替えながら、自然な会話を行えます。
+      </p>
+      <p style="font-size:14px;color:var(--brown-light);line-height:1.9;margin-top:10px">
+        会話ログはテキスト形式でエクスポートでき、質的研究のトランスクリプトとしても活用できます。
+      </p>
+      <p class="info-note">💡 音声認識にはChromeブラウザとインターネット接続が必要です</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPORT MODAL ===== -->
+<div id="export-modal" class="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
+  <div class="export-modal fade-in">
+    <h3>📤 会話ログのエクスポート</h3>
+    <button class="export-btn" style="background:var(--mint-dark);color:#fff" onclick="downloadExport()">📥 ファイルとして保存</button>
+    <button class="export-btn" style="background:var(--mint-med);color:var(--mint-dark)" onclick="copyExport()">📋 クリップボードにコピー</button>
+    <div id="export-status" style="text-align:center;font-size:14px;color:var(--mint-dark);min-height:24px;margin-bottom:6px"></div>
+    <button class="export-btn" style="background:var(--brown-pale);color:var(--brown)" onclick="closeExportModal()">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ──── State ────
+const APP_KEY = "kaiwa_app_v3";
+const QUICK_REPLIES = ["はい", "いいえ", "もう一度お願いします", "わかりました", "ありがとうございます"];
+const FONT_SIZES = [{l:"小",v:14},{l:"中",v:18},{l:"大",v:22},{l:"特大",v:28}];
+
+let appData = loadData();
+let currentSessionId = null;
+let currentSpeaker = "A";
+let isListening = false;
+let recognition = null;
+let showQuick = false;
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function timeStr() { return new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+function dateStr() { return new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit"}); }
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(APP_KEY)) || defaultData(); }
+  catch { return defaultData(); }
+}
+function defaultData() { return { sessions:[], settings:{fontSize:18, speakerA:"スタッフ", speakerB:"相手"} }; }
+function saveData() { try { localStorage.setItem(APP_KEY, JSON.stringify(appData)); } catch(e){} }
+
+// ──── Screen Navigation ────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'home') renderSessionList();
+  if (name === 'settings') renderSettings();
+  if (name === 'chat') renderChat();
+}
+
+// ──── Home Screen ────
+function showNewForm() {
+  document.getElementById('btn-new-session').style.display = 'none';
+  document.getElementById('new-form').style.display = 'block';
+  document.getElementById('new-label').value = '';
+  document.getElementById('new-label').focus();
+}
+function hideNewForm() {
+  document.getElementById('btn-new-session').style.display = 'block';
+  document.getElementById('new-form').style.display = 'none';
+}
+
+function createSession() {
+  const label = document.getElementById('new-label').value.trim();
+  if (!label) return;
+  const s = { id: uid(), label, createdAt: new Date().toISOString(), messages: [] };
+  appData.sessions.unshift(s);
+  saveData();
+  hideNewForm();
+  currentSessionId = s.id;
+  currentSpeaker = "A";
+  showScreen('chat');
+}
+
+function deleteSession(id) {
+  appData.sessions = appData.sessions.filter(s => s.id !== id);
+  saveData();
+  renderSessionList();
+}
+
+let deleteConfirmId = null;
+function confirmDelete(id) {
+  deleteConfirmId = id;
+  renderSessionList();
+}
+
+function renderSessionList() {
+  const el = document.getElementById('session-list');
+  if (appData.sessions.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <p class="empty-icon">🌱</p>
+        <p class="empty-title">まだ会話がありません</p>
+        <p class="empty-sub">上のボタンから始めてみましょう</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = appData.sessions.map(s => `
+    <div class="card fade-in">
+      <div onclick="openSession('${s.id}')" style="cursor:pointer">
+        <div class="card-title">${esc(s.label)}</div>
+        <div class="card-meta">${new Date(s.createdAt).toLocaleString("ja-JP")}　·　${s.messages.length} 件</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-small" style="background:var(--mint-med);color:var(--mint-dark)" onclick="openSession('${s.id}')">▶ 開く</button>
+        <button class="btn-small" style="background:var(--peach);color:var(--coral)" onclick="openExportModal('${s.id}')">📤 出力</button>
+        ${deleteConfirmId === s.id
+          ? `<button class="btn-small" style="background:var(--danger);color:#fff;font-weight:700" onclick="deleteSession('${s.id}')">本当に削除</button>`
+          : `<button class="btn-small" style="background:var(--danger-bg);color:var(--danger)" onclick="confirmDelete('${s.id}')">🗑 削除</button>`
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+function openSession(id) {
+  currentSessionId = id;
+  currentSpeaker = "A";
+  showScreen('chat');
+}
+
+// ──── Chat Screen ────
+function getSession() { return appData.sessions.find(s => s.id === currentSessionId); }
+
+function renderChat() {
+  const ses = getSession();
+  if (!ses) return;
+  const st = appData.settings;
+
+  document.getElementById('chat-title').textContent = ses.label;
+  document.getElementById('sp-label-a').textContent = st.speakerA;
+  document.getElementById('sp-label-b').textContent = st.speakerB;
+  setSpeaker(currentSpeaker);
+  renderMessages();
+  renderQuickBar();
+  updateInputText();
+}
+
+function setSpeaker(sp) {
+  currentSpeaker = sp;
+  const st = appData.settings;
+  const btnA = document.getElementById('sp-btn-a');
+  const btnB = document.getElementById('sp-btn-b');
+  btnA.className = 'speaker-btn' + (sp === 'A' ? ' active-a' : '');
+  btnB.className = 'speaker-btn' + (sp === 'B' ? ' active-b' : '');
+
+  const accent = sp === 'A' ? 'var(--tag-a)' : 'var(--tag-b)';
+  const name = sp === 'A' ? st.speakerA : st.speakerB;
+  document.getElementById('input-label').textContent = '● ' + name + ' が入力中';
+  document.getElementById('input-label').style.color = accent;
+  document.getElementById('btn-mic').style.background = isListening ? 'var(--danger)' : accent;
+  updateSendBtn();
+  renderQuickBar();
+}
+
+function renderMessages() {
+  const ses = getSession();
+  const el = document.getElementById('messages');
+  const st = appData.settings;
+  const fontSize = st.fontSize + 'px';
+
+  if (ses.messages.length === 0) {
+    document.getElementById('msg-empty').style.display = 'block';
+    // Remove any message elements but keep empty
+    el.querySelectorAll('.msg').forEach(m => m.remove());
+    return;
+  }
+  document.getElementById('msg-empty').style.display = 'none';
+
+  // Clear and re-render all
+  el.querySelectorAll('.msg').forEach(m => m.remove());
+  ses.messages.forEach(m => {
+    const isA = m.speaker === 'A';
+    const name = isA ? st.speakerA : st.speakerB;
+    const div = document.createElement('div');
+    div.className = 'msg fade-in ' + (isA ? 'left' : 'right');
+    div.innerHTML = `
+      <div class="msg-meta">${esc(name)}　${m.time}</div>
+      <div class="msg-bubble" style="font-size:${fontSize}">${esc(m.text)}</div>
+    `;
+    el.appendChild(div);
+  });
+
+  // Scroll to bottom
+  requestAnimationFrame(() => el.scrollTop = el.scrollHeight);
+}
+
+function sendMessage() {
+  const input = document.getElementById('input-text');
+  const text = input.value.trim();
+  if (!text) return;
+  stopMic();
+  const ses = getSession();
+  ses.messages.push({ id: uid(), speaker: currentSpeaker, text, time: timeStr(), date: dateStr() });
+  saveData();
+  input.value = '';
+  renderMessages();
+  updateSendBtn();
+  input.focus();
+}
+
+function updateSendBtn() {
+  const text = document.getElementById('input-text').value.trim();
+  const accent = currentSpeaker === 'A' ? 'var(--tag-a)' : 'var(--tag-b)';
+  const btn = document.getElementById('btn-send');
+  btn.style.background = text ? accent : 'var(--brown-pale)';
+  btn.style.cursor = text ? 'pointer' : 'default';
+}
+
+function updateInputText() {
+  const input = document.getElementById('input-text');
+  input.oninput = () => updateSendBtn();
+  updateSendBtn();
+}
+
+// ──── Quick Replies ────
+function toggleQuick() {
+  showQuick = !showQuick;
+  const bar = document.getElementById('quick-bar');
+  bar.style.display = showQuick ? 'flex' : 'none';
+  const btn = document.getElementById('btn-quick');
+  btn.style.background = showQuick ? 'var(--mint-med)' : 'transparent';
+}
+
+function renderQuickBar() {
+  const bar = document.getElementById('quick-bar');
+  const accent = currentSpeaker === 'A' ? 'var(--tag-a)' : 'var(--tag-b)';
+  bar.innerHTML = QUICK_REPLIES.map(q => `
+    <button class="quick-btn" style="border:2px solid ${accent};color:${accent}"
+      onclick="quickReply('${esc(q)}')">${esc(q)}</button>
+  `).join('');
+}
+
+function quickReply(text) {
+  const ses = getSession();
+  ses.messages.push({ id: uid(), speaker: currentSpeaker, text, time: timeStr(), date: dateStr() });
+  saveData();
+  showQuick = false;
+  document.getElementById('quick-bar').style.display = 'none';
+  document.getElementById('btn-quick').style.background = 'transparent';
+  renderMessages();
+}
+
+// ──── Speech Recognition ────
+function toggleMic() {
+  if (isListening) stopMic();
+  else startMic();
+}
+
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('音声認識はChromeブラウザで利用できます'); return; }
+  stopMic();
+
+  recognition = new SR();
+  recognition.lang = 'ja-JP';
+  recognition.interimResults = true;
+  recognition.continuous = true;
+
+  const input = document.getElementById('input-text');
+  let finalText = input.value;
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    input.value = finalText + interim;
+    updateSendBtn();
+  };
+
+  recognition.onerror = () => stopMic();
+  recognition.onend = () => { isListening = false; updateMicUI(); recognition = null; };
+
+  recognition.start();
+  isListening = true;
+  updateMicUI();
+}
+
+function stopMic() {
+  if (recognition) { recognition.stop(); recognition = null; }
+  isListening = false;
+  updateMicUI();
+}
+
+function updateMicUI() {
+  const btn = document.getElementById('btn-mic');
+  const input = document.getElementById('input-text');
+  const accent = currentSpeaker === 'A' ? 'var(--tag-a)' : 'var(--tag-b)';
+
+  if (isListening) {
+    btn.style.background = 'var(--danger)';
+    btn.innerHTML = '⏹';
+    btn.style.animation = 'pulse 1.5s infinite';
+    input.classList.add(currentSpeaker === 'A' ? 'listening-a' : 'listening-b');
+    input.classList.remove(currentSpeaker === 'A' ? 'listening-b' : 'listening-a');
+  } else {
+    btn.style.background = accent;
+    btn.innerHTML = '🎤';
+    btn.style.animation = 'none';
+    input.classList.remove('listening-a', 'listening-b');
+  }
+}
+
+function backToHome() {
+  stopMic();
+  showScreen('home');
+}
+
+// ──── Export ────
+let exportSessionId = null;
+
+function openExportModal(id) {
+  exportSessionId = id || currentSessionId;
+  document.getElementById('export-modal').classList.add('active');
+  document.getElementById('export-status').textContent = '';
+}
+function closeExportModal() {
+  document.getElementById('export-modal').classList.remove('active');
+  exportSessionId = null;
+}
+
+function buildExportText(ses) {
+  const st = appData.settings;
+  let o = `セッション：${ses.label}\n`;
+  o += `作成日時：${new Date(ses.createdAt).toLocaleString("ja-JP")}\n`;
+  o += `話者A：${st.speakerA}　／　話者B：${st.speakerB}\n`;
+  o += `${"─".repeat(40)}\n\n`;
+  ses.messages.forEach(m => {
+    const nm = m.speaker === "A" ? st.speakerA : st.speakerB;
+    o += `[${m.date} ${m.time}] ${nm}（話者${m.speaker}）: ${m.text}\n`;
+  });
+  o += `\n${"─".repeat(40)}\n`;
+  o += `総発話数：${ses.messages.length}\n`;
+  o += `話者A（${st.speakerA}）：${ses.messages.filter(m=>m.speaker==="A").length} 件\n`;
+  o += `話者B（${st.speakerB}）：${ses.messages.filter(m=>m.speaker==="B").length} 件\n`;
+  return o;
+}
+
+function getExportSession() {
+  return appData.sessions.find(s => s.id === (exportSessionId || currentSessionId));
+}
+
+function downloadExport() {
+  const ses = getExportSession();
+  if (!ses) return;
+  const txt = buildExportText(ses);
+  const blob = new Blob([txt], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `会話ログ_${ses.label}_${dateStr().replace(/\//g,"")}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('export-status').textContent = '✓ ファイルを保存しました';
+}
+
+async function copyExport() {
+  const ses = getExportSession();
+  if (!ses) return;
+  const txt = buildExportText(ses);
+  try {
+    await navigator.clipboard.writeText(txt);
+    document.getElementById('export-status').textContent = '✓ コピーしました！メールやチャットに貼り付けできます';
+    // Also update header button if in chat
+    const hdrBtn = document.getElementById('btn-copy-header');
+    if (hdrBtn) { hdrBtn.textContent = '✓'; setTimeout(() => hdrBtn.textContent = '📋', 2000); }
+  } catch {
+    document.getElementById('export-status').textContent = 'コピーに失敗しました。ファイル保存をお試しください';
+  }
+}
+
+// ──── Settings ────
+function renderSettings() {
+  const st = appData.settings;
+  document.getElementById('set-speaker-a').value = st.speakerA;
+  document.getElementById('set-speaker-b').value = st.speakerB;
+  renderSizeBar();
+  document.getElementById('size-preview').style.fontSize = st.fontSize + 'px';
+}
+
+function updateSpeakerNames() {
+  appData.settings.speakerA = document.getElementById('set-speaker-a').value || "話者A";
+  appData.settings.speakerB = document.getElementById('set-speaker-b').value || "話者B";
+  saveData();
+}
+
+function renderSizeBar() {
+  const bar = document.getElementById('size-bar');
+  bar.innerHTML = FONT_SIZES.map(f => `
+    <button class="size-btn ${appData.settings.fontSize === f.v ? 'active' : ''}"
+      onclick="setFontSize(${f.v})">${f.l}</button>
+  `).join('');
+}
+
+function setFontSize(v) {
+  appData.settings.fontSize = v;
+  saveData();
+  renderSizeBar();
+  document.getElementById('size-preview').style.fontSize = v + 'px';
+}
+
+// ──── Util ────
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ──── Init ────
+renderSessionList();
+</script>
+</body>
+</html>
